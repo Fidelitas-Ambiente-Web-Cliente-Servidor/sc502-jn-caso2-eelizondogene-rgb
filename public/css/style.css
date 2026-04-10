@@ -1,25 +1,36 @@
-/* General */
+/* ── Estilos generales ─────────────────────── */
 body {
-    background-color: #f8f9fa;
     font-family: 'Segoe UI', sans-serif;
 }
 
-/* Navbar spacing */
-.navbar {
-    margin-bottom: 0;
+/* Cards de talleres */
+.card {
+    border-radius: 12px;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
-/* Alert box */
-.alert {
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Navbar */
+.navbar {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Botones */
+.btn {
     border-radius: 8px;
 }
 
-/* Table */
+/* Tabla admin */
 .table th {
-    font-weight: 600;
+    font-size: 0.85rem;
+    letter-spacing: 0.03em;
 }
 
-/* Buttons */
-.btn-solicitar {
-    font-size: 0.85rem;
+/* Alertas */
+.alert {
+    border-radius: 10px;
 }
