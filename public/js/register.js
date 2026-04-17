@@ -1,6 +1,6 @@
 $(function () {
     let formRegister = $("#formRegister");
-    const urlBase = "index.php"
+    const urlBase = "/sc502-jn-caso2-eelizondogene-rgb/index.php";
 
     formRegister.on("submit", function (event) {
         event.preventDefault();

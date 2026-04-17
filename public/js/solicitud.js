@@ -1,77 +1,90 @@
-$(function () {
-    const urlBase = "index.php";
 
-    // Cargar solicitudes pendientes al iniciar
-    cargarSolicitudes();
+$(function () {
+    const urlBase = "/sc502-jn-caso2-eelizondogene-rgb/index.php";
+
+    // Cargar solicitudes pendientes al iniciar (solo si estamos en el panel admin)
+    if ($("#solicitudes-body").length > 0) {
+        cargarSolicitudes();
+    }
 
     function cargarSolicitudes() {
         $.get(urlBase + "?option=solicitudes_json", function (data) {
-            data = typeof data === "string" ? JSON.parse(data) : data;
-            const tbody = $("#solicitudes-body");
+            console.log(data);
+            let tbody = $("#solicitudes-body");
             tbody.html("");
 
-            if (!Array.isArray(data) || data.length === 0) {
-                tbody.append('<tr><td colspan="6" class="text-center">No hay solicitudes pendientes.</td></tr>');
+            if (data.length === 0) {
+                tbody.html("<tr><td colspan='5' class='text-center'>No hay solicitudes pendientes</td></tr>");
                 return;
             }
 
-            data.forEach(function (s) {
-                const fecha = new Date(s.fecha_solicitud).toLocaleDateString('es-CR');
-                tbody.append(`
-                    <tr id="fila-${s.id}">
-                        <td>${s.id}</td>
-                        <td>${s.taller_nombre}</td>
-                        <td>${s.usuario_nombre}</td>
-                        <td>${s.usuario_nombre}</td>
-                        <td>${fecha}</td>
-                        <td>
-                            <button class="btn btn-sm btn-success btn-aprobar" data-id="${s.id}">Aprobar</button>
-                            <button class="btn btn-sm btn-danger btn-rechazar" data-id="${s.id}">Rechazar</button>
-                        </td>
-                    </tr>
-                `);
+            data.forEach(function (solicitud) {
+                tbody.append(
+                    "<tr id='fila-" + solicitud.id + "'>" +
+                    "<td>" + solicitud.id + "</td>" +
+                    "<td>" + solicitud.taller + "</td>" +
+                    "<td>" + solicitud.solicitante + "</td>" +
+                    "<td>" + solicitud.fecha_solicitud + "</td>" +
+                    "<td>" +
+                    "<button class='btn btn-success btn-sm me-2 btnAprobar' data-id='" + solicitud.id + "'>Aprobar</button>" +
+                    "<button class='btn btn-danger btn-sm btnRechazar' data-id='" + solicitud.id + "'>Rechazar</button>" +
+                    "</td>" +
+                    "</tr>"
+                );
             });
         });
     }
 
-    // Aprobar
-    $(document).on("click", ".btn-aprobar", function () {
-        const id = $(this).data("id");
-        if (!confirm("¿Aprobar esta solicitud?")) return;
+        // Aprobar solicitud
+    $(document).on("click", ".btnAprobar", function () {
+        let solicitudId = $(this).data("id");
 
-        $.post(urlBase, { option: "aprobar", id_solicitud: id }, function (data) {
-            data = typeof data === "string" ? JSON.parse(data) : data;
-            mostrarMensaje(data.success ? data.message : data.error, data.success ? "success" : "danger");
-            if (data.success) {
-                $("#fila-" + id).fadeOut(400, function () { $(this).remove(); });
-            }
-        });
+        $.post(urlBase,
+            { id_solicitud: solicitudId, option: "aprobar" },
+            function (data) {
+                let mensaje = $("#mensaje");
+                if (data.success) {
+                    mensaje.removeClass("d-none alert-danger").addClass("alert-success").text("Solicitud aprobada correctamente.");
+                    $("#fila-" + solicitudId).remove();
+                    if ($("#solicitudes-body tr").length === 0) {
+                        $("#solicitudes-body").html("<tr><td colspan='5' class='text-center'>No hay solicitudes pendientes</td></tr>");
+                    }
+                } else {
+                    mensaje.removeClass("d-none alert-success").addClass("alert-danger").text(data.error);
+                }
+                setTimeout(function () { mensaje.addClass("d-none"); }, 4000);
+            }, "json"
+        );
     });
 
-    // Rechazar
-    $(document).on("click", ".btn-rechazar", function () {
-        const id = $(this).data("id");
-        if (!confirm("¿Rechazar esta solicitud?")) return;
+    // Rechazar solicitud
+    $(document).on("click", ".btnRechazar", function () {
+        let solicitudId = $(this).data("id");
 
-        $.post(urlBase, { option: "rechazar", id_solicitud: id }, function (data) {
-            data = typeof data === "string" ? JSON.parse(data) : data;
-            mostrarMensaje(data.success ? data.message : data.error, data.success ? "success" : "danger");
-            if (data.success) {
-                $("#fila-" + id).fadeOut(400, function () { $(this).remove(); });
-            }
-        });
+        $.post(urlBase,
+            { id_solicitud: solicitudId, option: "rechazar" },
+            function (data) {
+                let mensaje = $("#mensaje");
+                if (data.success) {
+                    mensaje.removeClass("d-none alert-danger").addClass("alert-success").text("Solicitud rechazada.");
+                    $("#fila-" + solicitudId).remove();
+                    if ($("#solicitudes-body tr").length === 0) {
+                        $("#solicitudes-body").html("<tr><td colspan='5' class='text-center'>No hay solicitudes pendientes</td></tr>");
+                    }
+                } else {
+                    mensaje.removeClass("d-none alert-success").addClass("alert-danger").text(data.error);
+                }
+                setTimeout(function () { mensaje.addClass("d-none"); }, 4000);
+            }, "json"
+        );
     });
 
-    // Logout
+    // Cerrar sesión (para admin)
     $("#btnLogout").on("click", function () {
         $.post(urlBase, { option: "logout" }, function () {
-            window.location.href = "index.php?page=login";
+            window.location = "index.php?page=login";
         });
     });
 
-    function mostrarMensaje(texto, tipo) {
-        const div = $("#mensaje");
-        div.removeClass().addClass("alert alert-" + tipo).text(texto).show();
-        setTimeout(function () { div.fadeOut(); }, 4000);
-    }
-});
+})
+

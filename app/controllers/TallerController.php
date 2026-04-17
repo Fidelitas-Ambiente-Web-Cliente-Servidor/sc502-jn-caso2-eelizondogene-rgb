@@ -44,34 +44,33 @@ class TallerController
             echo json_encode(['success' => false, 'error' => 'Debes iniciar sesión']);
             return;
         }
-        
+
         $tallerId = $_POST['taller_id'] ?? 0;
         $usuarioId = $_SESSION['id'];
 
-        
         // Verificar que el taller existe y tiene cupo
         $taller = $this->tallerModel->getById($tallerId);
         if (!$taller) {
             echo json_encode(['success' => false, 'error' => 'Taller no encontrado']);
             return;
         }
+
         if ($taller['cupo_disponible'] <= 0) {
             echo json_encode(['success' => false, 'error' => 'El taller no tiene cupos disponibles']);
             return;
         }
 
-        // Verificar que el usuario no tenga solicitud activa o aprobada
-        if ($this->solicitudModel->existeSolicitudActiva($usuarioId, $tallerId)) {
+        // Validar que no tenga solicitud activa o aprobada para ese taller
+        if ($this->solicitudModel->existeSolicitud($tallerId, $usuarioId)) {
             echo json_encode(['success' => false, 'error' => 'Ya tienes una solicitud activa o aprobada para este taller']);
             return;
         }
 
-        // Crear solicitud
-        if ($this->solicitudModel->crear($usuarioId, $tallerId)) {
-            echo json_encode(['success' => true, 'message' => 'Solicitud enviada correctamente. Espera la aprobación del administrador.']);
+        // Crear la solicitud
+        if ($this->solicitudModel->crear($tallerId, $usuarioId)) {
+            echo json_encode(['success' => true, 'message' => 'Solicitud enviada correctamente']);
         } else {
-            echo json_encode(['success' => false, 'error' => 'Error al enviar la solicitud']);
+            echo json_encode(['success' => false, 'error' => 'Error al crear la solicitud']);
         }
-
     }
 }

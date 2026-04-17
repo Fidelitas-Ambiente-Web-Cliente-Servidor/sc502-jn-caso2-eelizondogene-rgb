@@ -26,6 +26,18 @@ class AdminController
         require __DIR__ . '/../views/admin/solicitudes.php';
     }
     
+    public function getSolicitudesJson()
+    {
+        if (!isset($_SESSION['id']) || $_SESSION['rol'] !== 'admin') {
+            echo json_encode([]);
+            return;
+        }
+
+        $solicitudes = $this->solicitudModel->getPendientes();
+        header('Content-Type: application/json');
+        echo json_encode($solicitudes);
+    }
+
     // Aprobar solicitud
     public function aprobar()
     {
@@ -33,13 +45,35 @@ class AdminController
             echo json_encode(['success' => false, 'error' => 'No autorizado']);
             return;
         }
-        
+
         $solicitudId = $_POST['id_solicitud'] ?? 0;
-        
+
         try {
-            
-            echo json_encode(['success' => true]);
-            
+            // Obtener la solicitud para saber el taller
+            $solicitud = $this->solicitudModel->getById($solicitudId);
+            if (!$solicitud) {
+                echo json_encode(['success' => false, 'error' => 'Solicitud no encontrada']);
+                return;
+            }
+
+            // Verificar nuevamente que haya cupo disponible en tiempo real
+            $taller = $this->tallerModel->getById($solicitud['taller_id']);
+            if (!$taller || $taller['cupo_disponible'] <= 0) {
+                echo json_encode(['success' => false, 'error' => 'No hay cupo disponible para este taller']);
+                return;
+            }
+
+            // Descontar cupo y aprobar solicitud
+            $cupoDescontado = $this->tallerModel->descontarCupo($solicitud['taller_id']);
+            if (!$cupoDescontado) {
+                echo json_encode(['success' => false, 'error' => 'No se pudo descontar el cupo']);
+                return;
+            }
+
+            $this->solicitudModel->aprobar($solicitudId);
+
+            echo json_encode(['success' => true, 'message' => 'Solicitud aprobada correctamente']);
+
         } catch (Exception $e) {
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         }
